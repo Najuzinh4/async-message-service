@@ -10,11 +10,12 @@ export class NotificacaoService {
 
   constructor(private http: HttpClient) {}
 
-enviarNotificacao(conteudoMensagem: string): Observable<any> {
-  return this.http.post(`${this.apiUrl}/notificar`, { conteudoMensagem });
-}
+  enviarNotificacao(mensagemId: string, conteudoMensagem: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/notificar`, { mensagemId, conteudoMensagem });
+  }
 
   consultarStatus(mensagemId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/notificacao/status/${mensagemId}`);
+    const ts = Date.now();
+    return this.http.get(`${this.apiUrl}/notificacao/status/${mensagemId}?_=${ts}`);
   }
 }

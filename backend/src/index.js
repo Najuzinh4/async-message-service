@@ -23,17 +23,19 @@ app.get("/", (req, res) => {
 });
 
 app.post("/api/notificar", async (req, res) => {
-  const { conteudoMensagem } = req.body;
+  const { conteudoMensagem, mensagemId: incomingId } = req.body;
 
   if (!conteudoMensagem || conteudoMensagem.trim() === "") {
     return res.status(400).json({ error: "conteudoMensagem não pode ser vazio" });
   }
 
-  const mensagemId = uuidv4();
+  const mensagemId = incomingId || uuidv4();
   const payload = { mensagemId, conteudoMensagem };
 
   try {
     await publishMessage(payload);
+    // Registra status inicial para evitar 404 no polling imediato do frontend
+    statusMap.set(mensagemId, "AGUARDANDO_PROCESSAMENTO");
     return res.status(202).json({
       mensagem: "Mensagem recebida para processamento",
       mensagemId,

@@ -1,28 +1,40 @@
-<p>notificacao works!</p>
-<div>
+<section class="card">
   <h2>Enviar Notificação</h2>
-  <input
-    type="text"
-    [(ngModel)]="conteudoMensagem"
-    placeholder="Digite sua mensagem"
-  />
-  <button (click)="enviar()">Enviar</button>
-</div>
+  <div class="input-row">
+    <input
+      type="text"
+      [(ngModel)]="conteudoMensagem"
+      placeholder="Digite sua mensagem"
+      (keyup.enter)="enviar()"
+    />
+    <button (click)="enviar()" class="btn-primary">Enviar</button>
+  </div>
+</section>
 
-<hr />
-
-<h3>Notificações</h3>
-<ul>
-  <li *ngFor="let n of notificacoes">
-    <strong>{{ n.conteudo }}</strong>
-    (ID: {{ n.mensagemId }}) →
-    <span
-      [ngClass]="{
-        success: n.status === 'PROCESSADO_SUCESSO',
-        fail: n.status === 'FALHA_PROCESSAMENTO'
-      }"
-    >
-      {{ n.status }}
-    </span>
-  </li>
-</ul>
+<section class="card">
+  <h3>Notificações</h3>
+  <ul class="notif-list">
+    <li *ngFor="let n of notificacoes; trackBy: trackById" class="notif-item">
+      <div class="content">
+        <div class="title">{{ n.conteudo }}</div>
+        <div class="meta">ID: {{ n.mensagemId }}</div>
+      </div>
+      <span
+        class="badge"
+        [ngClass]="{
+          success: n.status === 'PROCESSADO_SUCESSO',
+          fail: n.status === 'FALHA_PROCESSAMENTO',
+          pending: n.status === 'AGUARDANDO_PROCESSAMENTO'
+        }"
+        title="{{ n.status }}"
+      >
+        <ng-container [ngSwitch]="n.status">
+          <span *ngSwitchCase="'PROCESSADO_SUCESSO'">✔️</span>
+          <span *ngSwitchCase="'FALHA_PROCESSAMENTO'">❌</span>
+          <span *ngSwitchDefault>⏳</span>
+        </ng-container>
+        &nbsp;{{ n.status }}
+      </span>
+    </li>
+  </ul>
+</section>

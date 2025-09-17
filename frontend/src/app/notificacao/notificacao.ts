@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
+import { v4 as uuidv4 } from 'uuid';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NotificacaoService } from './notificacao-service';
@@ -22,46 +23,69 @@ export class NotificacaoComponent {
   conteudoMensagem = '';
   notificacoes: Notificacao[] = [];
 
-  constructor(private notificacaoService: NotificacaoService) {}
+  constructor(
+    private notificacaoService: NotificacaoService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   enviar() {
     if (!this.conteudoMensagem.trim()) return;
 
-    const conteudo = this.conteudoMensagem;
+    const conteudo = this.conteudoMensagem.trim();
+    const mensagemId = uuidv4();
 
-    this.notificacaoService.enviarNotificacao(conteudo).subscribe({
+    // 1) Adiciona imediatamente na UI como AGUARDANDO
+    this.notificacoes.push({ mensagemId, conteudo, status: 'AGUARDANDO_PROCESSAMENTO' });
+    this.cdr.detectChanges();
+    // 2) Inicia polling imediatamente
+    this.iniciarPolling(mensagemId);
+    // 3) Limpa o input
+    this.conteudoMensagem = '';
+
+    // 4) Faz o POST
+    this.notificacaoService.enviarNotificacao(mensagemId, conteudo).subscribe({
       next: (res) => {
-        const mensagemId = res.mensagemId;
-        this.notificacoes.push({
-          mensagemId,
-          conteudo,
-          status: 'AGUARDANDO_PROCESSAMENTO',
-        });
-        this.iniciarPolling(mensagemId);
-        this.conteudoMensagem = '';
+        const idConfirmado = res.mensagemId || mensagemId;
+        if (idConfirmado !== mensagemId) {
+          const notif = this.notificacoes.find((n) => n.mensagemId === mensagemId);
+          if (notif) { notif.mensagemId = idConfirmado; this.cdr.detectChanges(); }
+        }
       },
-      error: (err) => console.error(err),
+      error: (err) => {
+        console.error(err);
+        const notif = this.notificacoes.find((n) => n.mensagemId === mensagemId);
+        if (notif) { notif.status = 'FALHA_PROCESSAMENTO'; this.cdr.detectChanges(); }
+      },
     });
   }
 
   iniciarPolling(mensagemId: string) {
-    const interval = setInterval(() => {
+    const check = () => {
       this.notificacaoService.consultarStatus(mensagemId).subscribe({
         next: (res) => {
           const notif = this.notificacoes.find((n) => n.mensagemId === mensagemId);
-          if (notif) {
-            notif.status = res.status;
-          }
-          if (
-            res.status === 'PROCESSADO_SUCESSO' ||
-            res.status === 'FALHA_PROCESSAMENTO'
-          ) {
-            clearInterval(interval);
-          }
+          if (notif) { notif.status = res.status; this.cdr.detectChanges(); }
         },
-        error: () => {
+        error: (err) => {
+          // 404 enquanto ainda processa é normal; log para depuração
+          if (err?.status && err.status !== 404) {
+            console.warn('Erro ao consultar status', err);
+          }
         },
       });
+    };
+    // dispara imediatamente e depois a cada 3s
+    check();
+    const interval = setInterval(() => {
+      check();
+      const notif = this.notificacoes.find((n) => n.mensagemId === mensagemId);
+      if (notif && (notif.status === 'PROCESSADO_SUCESSO' || notif.status === 'FALHA_PROCESSAMENTO')) {
+        clearInterval(interval);
+      }
     }, 3000);
+  }
+
+  trackById(_index: number, item: { mensagemId: string }) {
+    return item.mensagemId;
   }
 }
