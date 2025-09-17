@@ -34,15 +34,11 @@ export class NotificacaoComponent {
     const conteudo = this.conteudoMensagem.trim();
     const mensagemId = uuidv4();
 
-    // 1) Adiciona imediatamente na UI como AGUARDANDO
     this.notificacoes.push({ mensagemId, conteudo, status: 'AGUARDANDO_PROCESSAMENTO' });
     this.cdr.detectChanges();
-    // 2) Inicia polling imediatamente
     this.iniciarPolling(mensagemId);
-    // 3) Limpa o input
     this.conteudoMensagem = '';
 
-    // 4) Faz o POST
     this.notificacaoService.enviarNotificacao(mensagemId, conteudo).subscribe({
       next: (res) => {
         const idConfirmado = res.mensagemId || mensagemId;
@@ -67,7 +63,6 @@ export class NotificacaoComponent {
           if (notif) { notif.status = res.status; this.cdr.detectChanges(); }
         },
         error: (err) => {
-          // 404 enquanto ainda processa é normal; log para depuração
           if (err?.status && err.status !== 404) {
             console.warn('Erro ao consultar status', err);
           }

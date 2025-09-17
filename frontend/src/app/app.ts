@@ -6,8 +6,15 @@ import { NotificacaoComponent } from './notificacao/notificacao';
   standalone: true,
   imports: [NotificacaoComponent],
   template: `
-    <h1>Sistema de Notificações</h1>
-    <app-notificacao></app-notificacao>
+    <header class="hero">
+      <h1>Sistema de Notificações</h1>
+      <p class="sub">Teste de Desenvolvedor Full-Stack - Sistema de Notificações
+Assíncronas Simplificado</p>
+      <p class="sub">Desenvolvedora Full- Stack: Ana Júlia Gaspar</p>
+    </header>
+    <main class="container">
+      <app-notificacao></app-notificacao>
+    </main>
   `,
   styleUrl: './app.css'
 })
