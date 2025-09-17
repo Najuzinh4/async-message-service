@@ -2,9 +2,21 @@ require("dotenv").config();
 const express = require("express");
 const { v4: uuidv4 } = require("uuid");
 const { publishMessage } = require("./rabbit");
+const { startConsumer } = require("./consumer");
+
+const statusMap = new Map();
 
 const app = express();
 app.use(express.json());
+
+app.get("/api/notificacao/status/:id", (req, res) => {
+  const id = req.params.id;
+  const status = statusMap.get(id);
+  if (!status) {
+    return res.status(404).json({ error: "Mensagem não encontrada" });
+  }
+  return res.json({ mensagemId: id, status });
+});
 
 app.get("/", (req, res) => {
   res.send("✅ API de Notificações rodando! Use POST /api/notificar");
@@ -56,7 +68,10 @@ app.post("/api/notificar", async (req, res) => {
   }
 });
 
-// Start server
+//start server
 app.listen(process.env.PORT, () => {
   console.log(`🚀 Backend rodando em http://localhost:${process.env.PORT}`);
+  startConsumer(statusMap).catch((err) => {
+    console.error("❌ Erro ao iniciar consumidor:", err.message);
+  });
 });
