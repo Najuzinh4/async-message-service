@@ -90,5 +90,5 @@ O proxy está configurado em `frontend/proxy.conf.json` para redirecionar `/api`
 - Em ambientes corporativos, garanta acesso às portas 5671 (TLS) e 5672 (sem TLS).
 
 ## Licença
-Uso educacional/demonstração.
+CONFIDENCIAL: Demonstração de coding.
 
