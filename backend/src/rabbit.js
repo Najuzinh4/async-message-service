@@ -4,7 +4,6 @@ let connection = null;
 let channel = null;
 let connectingPromise = null;
 
-
 function buildHintFromError(err) {
   switch (err?.code) {
     case "ENETUNREACH":
@@ -22,6 +21,7 @@ function buildHintFromError(err) {
       return undefined;
   }
 }
+
 function logRabbitError(context, err) {
   console.error(context);
   console.error("Mensagem:", err?.message);
@@ -36,9 +36,10 @@ function logRabbitError(context, err) {
   }
   const hint = buildHintFromError(err);
   if (hint) {
-    console.error("💡 Dica:", hint);
+    console.error("Dica:", hint);
   }
 }
+
 function buildRabbitUrls() {
   const urls = [];
   const primary = process.env.RABBITMQ_URL?.trim();
@@ -62,33 +63,35 @@ function buildRabbitUrls() {
   }
   return urls;
 }
+
 async function establishChannel() {
   const urls = buildRabbitUrls();
   if (!urls.length) {
     throw new Error("RABBITMQ_URL não configurada");
   }
+
   let lastError;
   for (const url of urls) {
-    console.log(`🔄 Tentando conectar ao RabbitMQ usando ${url} ...`);
+    console.log(`Tentando conectar ao RabbitMQ usando ${url} ...`);
     try {
       const conn = await amqp.connect(url);
       conn.on("close", () => {
-        console.warn("⚠️ Conexão com RabbitMQ fechada. Tentando reconectar...");
+        console.warn("Conexão com RabbitMQ fechada. Tentando reconectar...");
         connection = null;
         channel = null;
         connectingPromise = null;
       });
       conn.on("error", (err) => {
-        logRabbitError("⚠️ Erro na conexão do RabbitMQ:", err);
+        logRabbitError("Erro na conexão do RabbitMQ:", err);
       });
       const ch = await conn.createChannel();
       await ch.assertQueue(process.env.QUEUE_NAME, { durable: true });
       connection = conn;
       channel = ch;
-      console.log("✅ Conectado ao RabbitMQ");
+      console.log("Conectado ao RabbitMQ");
       return channel;
     } catch (err) {
-      logRabbitError("❌ Erro ao conectar no RabbitMQ:", err);
+      logRabbitError("Erro ao conectar no RabbitMQ:", err);
       lastError = err;
     }
   }
@@ -96,26 +99,28 @@ async function establishChannel() {
   throw lastError;
 }
 
-  async function connectRabbit() {
-    if (channel) {
-      return channel;
-    }
-    if (!connectingPromise) {
-      connectingPromise = establishChannel().catch((err) => {
-        connectingPromise = null;
-        throw err;
-      });
-    }
-    return connectingPromise;
-  async function publishMessage(message) {
-    const ch = await connectRabbit();
-    await ch.sendToQueue(
-      process.env.QUEUE_NAME,
-      Buffer.from(JSON.stringify(message)),
-      { persistent: true }
-    );
-    console.log("Mensagem publicada:", message);
+async function connectRabbit() {
+  if (channel) {
+    return channel;
   }
-  module.exports = { connectRabbit, publishMessage };
-
+  if (!connectingPromise) {
+    connectingPromise = establishChannel().catch((err) => {
+      connectingPromise = null;
+      throw err;
+    });
+  }
+  return connectingPromise;
 }
+
+async function publishMessage(message) {
+  const ch = await connectRabbit();
+  ch.sendToQueue(
+    process.env.QUEUE_NAME,
+    Buffer.from(JSON.stringify(message)),
+    { persistent: true }
+  );
+  console.log("Mensagem publicada:", message);
+}
+
+module.exports = { connectRabbit, publishMessage };
+
