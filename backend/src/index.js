@@ -29,8 +29,30 @@ app.post("/api/notificar", async (req, res) => {
   } catch (err) {
     console.error("❌ Erro ao publicar mensagem:");
     console.error("Mensagem:", err.message);
+    if (err.code) {
+      console.error("Código:", err.code);
+    }
+    if (typeof err.errno !== "undefined" && err.errno !== err.code) {
+      console.error("Errno:", err.errno);
+    }
     console.error("Stack:", err.stack);
-    return res.status(500).json({ error: "Erro interno" });
+    const responseBody = {
+      error: "Falha ao publicar mensagem na fila RabbitMQ",
+      detalhe: err.message,
+    };
+    if (err.code) {
+      responseBody.codigo = err.code;
+    }
+    if (typeof err.errno !== "undefined" && err.errno !== err.code) {
+      responseBody.errno = err.errno;
+    }
+    const unreachableErrors = new Set(["ENETUNREACH", "EHOSTUNREACH"]);
+    if (unreachableErrors.has(err.code)) {
+      responseBody.dica =
+        "Verifique sua conexão de rede/VPN ou libere as portas 5671 e 5672 para alcançar o RabbitMQ.";
+    }
+    const statusCode = unreachableErrors.has(err.code) ? 503 : 502;
+    return res.status(statusCode).json(responseBody);
   }
 });
 

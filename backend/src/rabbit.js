@@ -5,25 +5,23 @@ let channel = null;
 let connectingPromise = null;
 
 
-function buildRabbitUrls() {
-  const urls = [];
-  const primary = process.env.RABBITMQ_URL?.trim();
-
- if (primary) {
-    urls.push(primary);
-
-    if (primary.startsWith("amqps://")) {
-      const fallback = "amqp://" + primary.slice("amqps://".length);
-      if (!urls.includes(fallback)) {
-        urls.push(fallback);
-      }
-    } else if (primary.startsWith("amqp://")) {
-      const fallback = "amqps://" + primary.slice("amqp://".length);
-      if (!urls.includes(fallback)) {
-        urls.push(fallback);
-      }
-    }
+function buildHintFromError(err) {
+  switch (err?.code) {
+    case "ENETUNREACH":
+    case "EHOSTUNREACH":
+      return "Cheque sua conexão com a internet/VPN e libere acesso às portas 5671 e 5672.";
+    case "ECONNREFUSED":
+      return "O host respondeu mas recusou a conexão. Confirme o protocolo (amqp/amqps), porta e se o serviço está ativo.";
+    case "ECONNRESET":
+      return "A conexão foi resetada. Tente novamente e valide configurações de TLS/Firewall.";
+    case "ETIMEDOUT":
+      return "A conexão expirou. Verifique latência de rede e portas liberadas.";
+    case "ENOTFOUND":
+      return "Hostname não encontrado. Revise a variável RABBITMQ_URL ou a configuração de DNS.";
+    default:
+      return undefined;
   }
+}
 
   const extra = process.env.RABBITMQ_URL_FALLBACK?.trim();
   if (extra && !urls.includes(extra)) {
