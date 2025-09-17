@@ -29,7 +29,7 @@ async function startConsumer(statusMap) {
       );
 
       //´publica na fila de status
-      const statusQueue = `fila.notificacao.status.Arthur`;
+      const statusQueue = `fila.notificacao.status.Naju`;
       await ch.assertQueue(statusQueue, { durable: true });
       await ch.sendToQueue(
         statusQueue,

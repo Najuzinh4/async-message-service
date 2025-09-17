@@ -1,0 +1,28 @@
+<p>notificacao works!</p>
+<div>
+  <h2>Enviar Notificação</h2>
+  <input
+    type="text"
+    [(ngModel)]="conteudoMensagem"
+    placeholder="Digite sua mensagem"
+  />
+  <button (click)="enviar()">Enviar</button>
+</div>
+
+<hr />
+
+<h3>Notificações</h3>
+<ul>
+  <li *ngFor="let n of notificacoes">
+    <strong>{{ n.conteudo }}</strong>
+    (ID: {{ n.mensagemId }}) →
+    <span
+      [ngClass]="{
+        success: n.status === 'PROCESSADO_SUCESSO',
+        fail: n.status === 'FALHA_PROCESSAMENTO'
+      }"
+    >
+      {{ n.status }}
+    </span>
+  </li>
+</ul>

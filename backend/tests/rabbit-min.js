@@ -4,7 +4,7 @@ const amqp = require("amqplib");
   try {
     const conn = await amqp.connect(process.env.RABBITMQ_URL);
     const ch = await conn.createChannel();
-    await ch.assertQueue("fila.notificacao.entrada.Arthur", { durable: true });
+    await ch.assertQueue("fila.notificacao.entrada.Naju", { durable: true });
     console.log("✅ Conectado e fila criada com sucesso!");
     await conn.close();
   } catch (err) {
