@@ -12,11 +12,11 @@ async function connectRabbit() {
     console.log("Conectado ao RabbitMQ");
     return channel;
   } catch (err) {
-  console.error("❌ Erro ao conectar no RabbitMQ:");
-  console.error("Mensagem:", err.message);
-  console.error("Stack:", err.stack);
-  throw err;
-}
+    console.error("❌ Erro ao conectar no RabbitMQ:");
+    console.error("Mensagem:", err.message);
+    console.error("Stack:", err.stack);
+    throw err;
+  }
 }
 
 async function publishMessage(message) {

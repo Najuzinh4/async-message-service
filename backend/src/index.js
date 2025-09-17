@@ -27,11 +27,11 @@ app.post("/api/notificar", async (req, res) => {
       mensagemId,
     });
   } catch (err) {
-  console.error("❌ Erro ao publicar mensagem:");
-  console.error("Mensagem:", err.message);
-  console.error("Stack:", err.stack);
-  return res.status(500).json({ error: "Erro interno" });
-}
+    console.error("❌ Erro ao publicar mensagem:");
+    console.error("Mensagem:", err.message);
+    console.error("Stack:", err.stack);
+    return res.status(500).json({ error: "Erro interno" });
+  }
 });
 
 // Start server
